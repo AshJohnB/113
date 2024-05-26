@@ -2,6 +2,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.*;
 import java.util.ArrayList;
 
 public class EditProducts extends JFrame implements ActionListener {
@@ -10,9 +11,10 @@ public class EditProducts extends JFrame implements ActionListener {
     private JComboBox<String> productTypeComboBox;
     private JButton addProductButton, goHomeButton;
     private ArrayList<Product> products;
+    private static final String FILE_PATH = "products.dat";
 
     public EditProducts() {
-        products = new ArrayList<>();
+        products = loadProducts();
 
         setTitle("Edit Products");
         setSize(400, 200);
@@ -61,7 +63,9 @@ public class EditProducts extends JFrame implements ActionListener {
 
             try {
                 double price = Double.parseDouble(priceText);
-                products.add(new Product(name, price, type));
+                Product product = new Product(name, price, type);
+                products.add(product);
+                saveProducts();
                 JOptionPane.showMessageDialog(this, "Product added successfully");
                 productNameField.setText("");
                 productPriceField.setText("");
@@ -69,8 +73,32 @@ public class EditProducts extends JFrame implements ActionListener {
                 JOptionPane.showMessageDialog(this, "Invalid price format", "Error", JOptionPane.ERROR_MESSAGE);
             }
         } else if (e.getSource() == goHomeButton) {
- 
             dispose();
         }
+    }
+
+    private void saveProducts() {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(FILE_PATH))) {
+            oos.writeObject(products);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private ArrayList<Product> loadProducts() {
+        File file = new File(FILE_PATH);
+        if (file.exists()) {
+            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+                return (ArrayList<Product>) ois.readObject();
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        return new ArrayList<>();
+    }
+
+    public static void main(String[] args) {
+        new EditProducts();
     }
 }
